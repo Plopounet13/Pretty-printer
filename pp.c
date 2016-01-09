@@ -27,6 +27,7 @@ int main(int argc, char** argv){
 	if (!(dst=fopen(argv[2],"w"))){
 		perreur(3, "Impossible d'ouvrir le fichier destination");
 	}
+	int nbAcc = 0;
 	
 	
 	
