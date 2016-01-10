@@ -31,22 +31,102 @@ void detect_fin_com(int *etat, char c, FILE *dst){
 	}
 }
 
-void detect_com(int *etat,int *etat_fin, char c, FILE *dst){
-	if (*etat == 0) {
-		*etat = (c=='/')?1:0;
-	}else if (*etat == 1) {
+void detect_com(int *etat_com,int *etat_fin, char c, FILE *dst){
+	if (*etat_com == 0) {
+		*etat_com = (c=='/')?1:0;
+	}else if (*etat_com == 1) {
 		if (c == '*'){
-			*etat = 2;
+			*etat_com = 2;
 		}else{
-			*etat = 0;
+			*etat_com = 0;
 			fprintf(dst, "/");
 		}
 	}else{
 		fprintf(stderr, "Tu ne devrais pas mettre à jour etat_com.\n");
 	}
 	detect_fin_com(etat_fin, c, dst);
-	if (!*etat && !*etat_fin)
+	if (!*etat_com && !*etat_fin)
 		fprintf(dst,"%c", c);
+}
+
+void detect_for(int* etat_for, char c){
+	if (c=='f')
+		*etat_for=1;
+	else
+		*etat_for=0;
+}
+
+void detect_struct(int* etat_struc, char c){
+	if (c=='s')
+		*etat_struc=1;
+	else
+		*etat_struc=0;
+}
+
+void search_for(int* etat_for, char c){
+	if (*etat_for==3){
+		if (c=='(')
+			*etat_for=4;
+		else if (c!=' ')
+			*etat_for=0;
+	}
+	
+	if (*etat_for==2){
+		if (c=='r')
+			*etat_for=3;
+		else
+			*etat_for=0;
+	}
+	
+	if (*etat_for==1){
+		if (c=='o')
+			*etat_for=2;
+		else
+			*etat_for=0;
+	}
+}
+	
+void search_struct(int* etat_struc, char c){
+	if (*etat_struc==6){
+		if (c==' ')
+			*etat_struc=7;
+		else
+			*etat_struc=0;
+	}
+
+	if (*etat_struc==5){
+		if (c=='t')
+			*etat_struc=6;
+		else
+			*etat_struc=0;
+	}
+	
+	if (*etat_struc==4){
+		if (c=='c')
+			*etat_struc=5;
+		else
+			*etat_struc=0;
+	}
+
+	if (*etat_struc==3){
+		if (c=='u')
+			*etat_struc=4;
+		else
+			*etat_struc=0;
+	}
+	
+	if (*etat_struc==2){
+		if (c=='r')
+			*etat_struc=3;
+		else
+			*etat_struc=0;
+	}
+	if (*etat_struc==1){
+		if (c=='t')
+			*etat_struc=2;
+		else
+			*etat_struc=0;
+	}
 }
 
 void decNbAcc(int *nbAcc, int *nbErrB, int nbline, int nbchar){
@@ -63,16 +143,19 @@ void indente (FILE *dst, int nbAcc){
 		fprintf(dst,"\t");
 }
 
-void transINLINE(FILE* dst, int *etat, int *etat_com, int *etat_fin_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c){
+void transINLINE(FILE* dst, int *etat, int *etat_com, int *etat_fin_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c, int* struc){
 	if (c == '{'){
 		*etat = NEW_BLOC;
 		fprintf(dst,"\n");
 		indente(dst, *nbAcc);
 	}else if (c == '}'){
-		*etat = END_BLOC;
 		decNbAcc(nbAcc, nbErrB, nbline, nbchar);
-		fprintf(dst,"\n");
-		indente(dst, *nbAcc);
+		if (*struc<7){
+			*etat = END_BLOC;
+			fprintf(dst,"\n");
+			indente(dst, *nbAcc);
+		}else
+			*struc=8;
 	}else if (c == '"'){
 		*etat = IN_STR;
 	}else if (c == '\n'){
@@ -93,50 +176,66 @@ int main(int argc, char** argv){
 		perreur(3, "Impossible d'ouvrir le fichier destination");
 	}
 	int nbAcc = 0,
+		struc = 0,
 		etat = NEW_LINE,
 		etat_com = 0,
 		etat_fin_com = 0,
-		nbline=1,
-		nbchar=0,
+		nbline = 1,
+		nbchar = 0,
 		nbErrB = 0,
 		nbErrC = 0,
+		inFor = 0,
 		etat_ppc = 0;
+		
 	char c;
-	/*
-	 **
-	 **
-	  A FAIRE :
-		GERER COMMENTAIRES TROP FERMES
-	 **
-	 **
-	*/
+	
+	
 	while ((c = fgetc(src)) != EOF){
 		if (c == '\n'){
 			nbline++;
 			nbchar=0;
 		}else
 			++nbchar;
+		
+		
 		switch (etat) {
 			case NEW_LINE:
-				/* A CHOISIR : saut de ligne autorisé ? */
 				if (c != ' ' && c != '\t' && c != '\n'){
 					if (c == '"'){
 						etat = IN_STR;
 					}else if (c == '{'){
 						etat = NEW_BLOC;
 					}else if (c == '}'){
-						etat = END_BLOC;
 						decNbAcc(&nbAcc, &nbErrB, nbline, nbchar);
+						if (struc<7)
+							etat = END_BLOC;
+						else{
+							etat=IN_LINE;
+							struc=8;
+						}
 					}else{
 						etat = IN_LINE;
 					}
 					indente(dst, nbAcc);
+					
+					if (struc!=7)
+						detect_struct(&struc, c);
+					detect_for(&inFor, c);
 					detect_com(&etat_com, &etat_fin_com, c, dst);
 				}
 				break;
 				
 			case IN_LINE:
-				transINLINE(dst, &etat, &etat_com, &etat_fin_com, &nbAcc, &nbErrB, nbline, nbchar, c);
+				transINLINE(dst, &etat, &etat_com, &etat_fin_com, &nbAcc, &nbErrB, nbline, nbchar, c, &struc);
+				search_for(&inFor, c);
+				search_struct(&struc, c);
+						
+				if (inFor!=4 && c == ';'){
+					if (struc==8)
+						struc=0;
+					fprintf(dst, "\n");
+					etat=NEW_LINE;
+				}
 				break;
 				
 			case NEW_BLOC:
@@ -154,6 +253,9 @@ int main(int argc, char** argv){
 						etat = IN_LINE;
 					}
 					indente(dst, nbAcc);
+					detect_for(&inFor, c);
+					if (struc<7)
+						detect_struct(&struc, c);
 					detect_com(&etat_com, &etat_fin_com, c, dst);
 				}
 				break;
@@ -173,23 +275,24 @@ int main(int argc, char** argv){
 						etat = IN_LINE;
 					}
 					indente(dst, nbAcc);
+					detect_for(&inFor, c);
 					detect_com(&etat_com, &etat_fin_com, c, dst);
 				}
 				break;
 				
 			case IN_COM:
-				if (c == '\n'){
-					fprintf(dst, "*/");
-					etat = NEW_LINE_COM;
-				}
 				detect_fin_com(&etat_fin_com, c, dst);
-				if (!etat_fin_com)
+				if (c == '\n'){
+					fprintf(dst, "*/\n");
+					indente(dst, nbAcc);
+					fprintf(dst, "/*");
+				}else if (!etat_fin_com)
 					fprintf(dst, "%c", c);
+				
 				break;
 				
 			case NEW_LINE_COM:
 				if (c != ' ' && c != '\t'){
-					indente(dst, nbAcc);
 					fprintf(dst, "/*%c", c);
 					etat = IN_COM;
 					detect_fin_com(&etat_fin_com, c, dst);
@@ -242,8 +345,6 @@ int main(int argc, char** argv){
 			etat = IN_COM;
 			etat_com = 0;
 			etat_fin_com =0;
-			fprintf(dst, "\n");
-			indente(dst, nbAcc);
 			fprintf(dst, "/*");
 		}
 		if (etat_fin_com == 2){
