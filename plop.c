@@ -12,7 +12,6 @@ void bit()
 }
 
 /* compilation pour un systeme 32-bit */
-
 #else
 void bit()
 {
@@ -26,35 +25,25 @@ void bit()
 }
 
 /* compilation pour un systeme 64-bit */
-
 #endif
 #define ACVJ B
-
 int test1(int number);
 int* test2(int number);
 /* test de l'intendation*/
 
 /* des déclarations de fonctions*/
-
-
-
 struct complex
 {
 	int Re;int Im;
 }
 
 /*test des struct*/
-
-
 ;
-
 int main (int argc, char** argv)
 {
 	printf("test ");
 	printf("reussi\n");
 	/*test de saut à la ligne standard*/
-	
-
 	int boucle=1;
 	for(int i=0;i<=5;i++)
 	{
@@ -63,10 +52,7 @@ int main (int argc, char** argv)
 	
 	/* test*/
 	/*du for*/
-	
-int i=0;
-	
-
+	int i=0;
 	do
 	{
 		printf("test serie 2 num %i\n", i);
@@ -81,7 +67,5 @@ int i=0;
 		}
 	}
 	while (i<10);
-	
-
 	return 0;
 }

@@ -119,7 +119,7 @@ int main(int argc, char** argv){
 		switch (etat) {
 			case NEW_LINE:
 				/* A CHOISIR : saut de ligne autorisé ? */
-				if (c != ' ' && c != '\t'){
+				if (c != ' ' && c != '\t' && c != '\n'){
 					if (c == '"'){
 						etat = IN_STR;
 					}else if (c == '{'){
