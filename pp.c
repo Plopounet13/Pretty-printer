@@ -94,6 +94,7 @@ int main(int argc, char** argv){
 			++nbchar;
 		switch (etat) {
 			case NEW_LINE:
+				/* A CHOISIR : saut de ligne autorisé ? */
 				if (c != ' ' && c != '\t'){
 					if (c == '"'){
 						etat = IN_STR;
@@ -115,9 +116,41 @@ int main(int argc, char** argv){
 				break;
 				
 			case NEW_BLOC:
+				++nbAcc;
+				fprintf(dst, "\n");
+				if (c == '\n' || c == ' ' || c == '\t'){
+					etat = NEW_LINE;
+				}else{
+					if (c == '"'){
+						etat = IN_STR;
+					}else if (c == '}'){
+						etat = END_BLOC;
+						decNbAcc(&nbAcc, &nbErrB, nbline, nbchar);
+					}else if (c != '{'){
+						etat = IN_LINE;
+					}
+					indente(dst, nbAcc);
+					detect_com(&etat_com, c, dst);
+				}
 				break;
 				
 			case END_BLOC:
+				fprintf(dst, "\n");
+				if (c == '\n' || c == ' ' || c == '\t'){
+					etat = NEW_LINE;
+				}else{
+					if (c == '"'){
+						etat = IN_STR;
+					}else if (c == '{'){
+						etat = NEW_BLOC;
+					}else if (c == '}'){
+						decNbAcc(&nbAcc, &nbErrB, nbline, nbchar);
+					}else{
+						etat = IN_LINE;
+					}
+					indente(dst, nbAcc);
+					detect_com(&etat_com, c, dst);
+				}
 				break;
 				
 			case NEW_COM:
@@ -145,7 +178,9 @@ int main(int argc, char** argv){
 		if (etat_com == 2){
 			etat = NEW_COM;
 			etat_com = 0;
-			fprintf(dst, "\n/*");
+			fprintf(dst, "\n");
+			indente(dst, nbAcc);
+			fprintf(dst, "/*");
 		}
 	}
 	
