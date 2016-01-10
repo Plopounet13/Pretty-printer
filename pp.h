@@ -10,12 +10,10 @@
 #define IN_LINE 1
 #define NEW_BLOC 2
 #define END_BLOC 3
-#define NEW_COM 4
-#define IN_COM 5
-#define NEW_LINE_COM 6
-#define END_COM 7
-#define IN_STR 8
-#define NEW_LINE_STR 9
+#define IN_COM 4
+#define NEW_LINE_COM 5
+#define IN_STR 6
+#define NEW_LINE_STR 7
 //#define IN_FOR
 
 #endif /* pp_h */

@@ -33,6 +33,21 @@ void detect_com(int *etat, char c, FILE *dst){
 		fprintf(dst,"%c", c);
 }
 
+void detect_fin_com(int *etat, char c, FILE *dst){
+	if (*etat == 0){
+		*etat = (c=='*')?1:0;
+	}else if (*etat == 1){
+		if (c == '/'){
+			*etat = 2;
+		}else{
+			*etat = 0;
+			fprintf(dst, "*");
+		}
+	}else{
+		fprintf(stderr, "Tu ne devrais pas mettre à jour etat_fin_com.\n");
+	}
+}
+
 void decNbAcc(int *nbAcc, int *nbErrB, int nbline, int nbchar){
 	if (nbAcc > 0)
 		--nbAcc;
@@ -76,7 +91,14 @@ int main(int argc, char** argv){
 	if (!(dst=fopen(argv[2],"w"))){
 		perreur(3, "Impossible d'ouvrir le fichier destination");
 	}
-	int nbAcc = 0, etat = NEW_LINE, etat_com = 0, nbline=1, nbchar=0, nbErrB = 0, nbErrC = 0;
+	int nbAcc = 0,
+		etat = NEW_LINE,
+		etat_com = 0,
+		etat_fin_com = 0,
+		nbline=1,
+		nbchar=0,
+		nbErrB = 0,
+		nbErrC = 0;
 	char c;
 	/*
 	 **
@@ -153,16 +175,16 @@ int main(int argc, char** argv){
 				}
 				break;
 				
-			case NEW_COM:
-				break;
-				
 			case IN_COM:
+				if (c == '\n'){
+					etat = NEW_LINE_COM;
+				}
+				detect_fin_com(&etat_fin_com, c, dst);
+				if (!etat_fin_com)
+					fprintf(dst, "%c", c);
 				break;
 				
 			case NEW_LINE_COM:
-				break;
-				
-			case END_COM:
 				break;
 				
 			case IN_STR:
@@ -176,11 +198,18 @@ int main(int argc, char** argv){
 				break;
 		}
 		if (etat_com == 2){
-			etat = NEW_COM;
+			etat = IN_COM;
 			etat_com = 0;
+			etat_fin_com =0;
 			fprintf(dst, "\n");
 			indente(dst, nbAcc);
 			fprintf(dst, "/*");
+		}
+		if (etat_fin_com == 2){
+			etat = NEW_LINE;
+			etat_com = 0;
+			etat_fin_com = 0;
+			fprintf(dst, "*/\n");
 		}
 	}
 	
