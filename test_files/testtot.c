@@ -26,9 +26,9 @@ int i=0;
 
 	do{printf("test serie 2 num %i\n", i);
 			i++;
-if (i%2)
-	printf("%i est impair\n",i);
-else {printf("%i pair\n", i)};
+if (i%2){
+	printf("%i est impair\n",i);}
+else {printf("%i pair\n", i);}
 }while (i<10);
 
 
