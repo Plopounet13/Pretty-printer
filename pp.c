@@ -33,6 +33,38 @@ void detect_com(int *etat, char c, FILE *dst){
 		fprintf(dst,"%c", c);
 }
 
+void decNbAcc(int *nbAcc, int *nbErrB, int nbline, int nbchar){
+	if (nbAcc > 0)
+		--nbAcc;
+	else {
+		fprintf(stderr, "Bloc fermé non ouvert en l%d:c%d du fichier source.\n",nbline, nbchar);
+		++nbErrB;
+	}
+}
+
+void indente (FILE *dst, int nbAcc){
+	for (int i = 0; i<nbAcc; ++i)
+		fprintf(dst,"\t");
+}
+
+void transINLINE(FILE* dst, int *etat, int *etat_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c){
+	if (c == '{'){
+		*etat = NEW_BLOC;
+		fprintf(dst,"\n");
+		indente(dst, *nbAcc);
+	}else if (c == '}'){
+		*etat = END_BLOC;
+		decNbAcc(nbAcc, nbErrB, nbline, nbchar);
+		fprintf(dst,"\n");
+		indente(dst, *nbAcc);
+	}else if (c == '"'){
+		*etat = IN_STR;
+	}else if (c == '\n'){
+		*etat = NEW_LINE;
+	}
+	detect_com(etat_com, c, dst);
+}
+
 int main(int argc, char** argv){
 	if (argc != 3){
 		erreur(1, "Nombre de parametres incorrect.");
@@ -44,27 +76,42 @@ int main(int argc, char** argv){
 	if (!(dst=fopen(argv[2],"w"))){
 		perreur(3, "Impossible d'ouvrir le fichier destination");
 	}
-	int nbAcc = 0, etat = NEW_LINE, etat_com = 0;
+	int nbAcc = 0, etat = NEW_LINE, etat_com = 0, nbline=1, nbchar=0, nbErrB = 0, nbErrC = 0;
 	char c;
-	
+	/*
+	 **
+	 **
+	  A FAIRE :
+		GERER COMMENTAIRES TROP FERMES
+	 **
+	 **
+	*/
 	while ((c = fgetc(src)) != EOF){
+		if (c == '\n'){
+			nbline++;
+			nbchar=0;
+		}else
+			++nbchar;
 		switch (etat) {
 			case NEW_LINE:
 				if (c != ' ' && c != '\t'){
-					for (int i = 0; i<nbAcc; ++i)
-						fprintf(dst,"\t");
-					detect_com(&etat_com, c, dst);
 					if (c == '"'){
 						etat = IN_STR;
 					}else if (c == '{'){
 						etat = NEW_BLOC;
+					}else if (c == '}'){
+						etat = END_BLOC;
+						decNbAcc(&nbAcc, &nbErrB, nbline, nbchar);
 					}else{
 						etat = IN_LINE;
 					}
+					indente(dst, nbAcc);
+					detect_com(&etat_com, c, dst);
 				}
 				break;
 				
 			case IN_LINE:
+				transINLINE(dst, &etat, &etat_com, &nbAcc, &nbErrB, nbline, nbchar, c);
 				break;
 				
 			case NEW_BLOC:
@@ -103,7 +150,7 @@ int main(int argc, char** argv){
 	}
 	
 	if (feof(src)){
-		printf("Fin lecture");
+		printf("Fin lecture.\nIl y a eu %d blocs fermés sans être ouverts, %d blocs non refermés, et %d commentaires fermés sans être ouverts.",nbErrB, nbAcc, nbErrC);
 	}else{
 		perreur(4, "Erreur lecture fichier source");
 	}
