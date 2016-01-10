@@ -206,6 +206,10 @@ int main(int argc, char** argv){
 			fprintf(dst, "/*");
 		}
 		if (etat_fin_com == 2){
+			if (etat != IN_COM){
+				fprintf(stderr, "Commentaire fermé avant d'être ouvert en l%d:c%d du fichier source.\n", nbline, nbchar);
+				++nbErrC;
+			}
 			etat = NEW_LINE;
 			etat_com = 0;
 			etat_fin_com = 0;
@@ -214,7 +218,11 @@ int main(int argc, char** argv){
 	}
 	
 	if (feof(src)){
-		printf("Fin lecture.\nIl y a eu %d blocs fermés sans être ouverts, %d blocs non refermés, et %d commentaires fermés sans être ouverts.",nbErrB, nbAcc, nbErrC);
+		printf("Fin lecture.\n");
+		fprintf(stderr, "Il y a eu %d blocs fermés sans être ouverts, %d blocs non refermés, et %d commentaires fermés sans être ouverts.\n",nbErrB, nbAcc, nbErrC);
+		if (etat == IN_COM || etat == NEW_LINE_COM){
+			fprintf(stderr, "Le fichier source termine par un commentaire non fermé.\n");
+		}
 	}else{
 		perreur(4, "Erreur lecture fichier source");
 	}
