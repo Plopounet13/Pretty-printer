@@ -49,8 +49,8 @@ void detect_fin_com(int *etat, char c, FILE *dst){
 }
 
 void decNbAcc(int *nbAcc, int *nbErrB, int nbline, int nbchar){
-	if (nbAcc > 0)
-		--nbAcc;
+	if (*nbAcc > 0)
+		--(*nbAcc);
 	else {
 		fprintf(stderr, "Bloc fermé non ouvert en l%d:c%d du fichier source.\n",nbline, nbchar);
 		++nbErrB;
