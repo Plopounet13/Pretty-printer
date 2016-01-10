@@ -98,7 +98,8 @@ int main(int argc, char** argv){
 		nbline=1,
 		nbchar=0,
 		nbErrB = 0,
-		nbErrC = 0;
+		nbErrC = 0,
+		etat_ppc = 0;
 	char c;
 	/*
 	 **
@@ -212,6 +213,23 @@ int main(int argc, char** argv){
 					else
 						etat = IN_STR;
 				}
+				break;
+				
+				
+			case IN_PPC:
+				if (c == '\\'){
+					if (etat_ppc == 0)
+						etat_ppc = 1;
+					else if (etat_ppc==1)
+						etat_ppc=0;//si jamais le "\" était échappé un autre "\"
+				}
+				if (c=='\n'){
+					if (etat_ppc==1){//si le "\" est suivi d'une vrai entrée
+						etat_ppc = 0;
+					}else//si il y a une entrée seule
+						etat = NEW_LINE;
+				}
+				detect_com(&etat_com, c, dst);
 				break;
 				
 			default:
