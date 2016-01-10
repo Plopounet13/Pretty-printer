@@ -31,7 +31,7 @@ int top(Stack s){
 	if (s->nbElem)
 		return s->head->val;
 	else{
-		fprintf(stderr, "Pile vide.\n");
+		return(-1);
 		exit(1);
 	}
 }
@@ -44,7 +44,7 @@ void push(Stack s, int i){
 	s->head = tmp;
 }
 
-Stack new(){
+Stack new_stack(){
 	Stack tmp = malloc(sizeof(stack_type));
 	tmp->head = NULL;
 	tmp->nbElem = 0;

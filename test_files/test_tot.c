@@ -29,7 +29,8 @@ int i=0;
 if (i%2){
 	printf("%i est impair\n",i);}
 else {printf("%i pair\n", i);}
-}while (i<10);
+}
+while (i<10);
 
 
 return 0;

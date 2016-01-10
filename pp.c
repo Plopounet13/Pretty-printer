@@ -1,4 +1,5 @@
 #include "pp.h"
+#include "pile.h"
 
 void usage(){
 	fprintf(stderr, "Usage : pp Src_file_name Dst_file_name\n");
@@ -71,11 +72,12 @@ void detect_do(int* etat_do, char c){
 }
 
 
-void search_do(int* etat_do, stack baDo, int prof, char c){
+void search_do(int* etat_do, Stack baDo, int prof, char c){
 	if (*etat_do==2){
-		if (c=='('){
+		if (c=='{'){
 			*etat_do=3;
 			push(baDo, prof);
+			*etat_do=0;
 		}
 		else if (c!=' ')
 			*etat_do=0;
@@ -169,28 +171,20 @@ void indente (FILE *dst, int nbAcc){
 		fprintf(dst,"\t");
 }
 
-void transINLINE(FILE* dst, int *etat, int *etat_com, int *etat_fin_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c, int* struc, stack biDo){
+void transINLINE(FILE* dst, int *etat, int *etat_com, int *etat_fin_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c, int* struc, Stack biDo, int endDo){
 	if (c == '{'){
 		*etat = NEW_BLOC;
 		fprintf(dst,"\n");
 		indente(dst, *nbAcc);
 	}else if (c == '}'){
 		decNbAcc(nbAcc, nbErrB, nbline, nbchar);
-		if (*struc<7 && top(biDo)!=nbAcc){
-			*etat = END_BLOC;
-			fprintf(dst,"\n");
-			indente(dst, *nbAcc);
-		}else if (*struc>=7)
-			*struc=8;
-		else if (top(biDo)==nbAcc){
-			pop(biDo);
-		}
 	}else if (c == '"'){
 		*etat = IN_STR;
-	}else if (c == '\n'){
+	}else if (c == '\n' && !endDo){
 		*etat = NEW_LINE;
 	}
-	detect_com(etat_com, etat_fin_com, c, dst);
+	if (!endDo || (endDo && c!='\n'))
+		detect_com(etat_com, etat_fin_com, c, dst);
 }
 
 int main(int argc, char** argv){
@@ -213,11 +207,13 @@ int main(int argc, char** argv){
 		nbchar = 0,
 		nbErrB = 0,
 		nbErrC = 0,
+		biDo=0,
 		inFor = 0,
+		endDo = 0,
 		etat_ppc = 0;
 		
 	char c;
-	stack nbDo;
+	Stack nbDo=new_stack();
 	
 	
 	while ((c = fgetc(src)) != EOF){
@@ -237,11 +233,15 @@ int main(int argc, char** argv){
 						etat = NEW_BLOC;
 					}else if (c == '}'){
 						decNbAcc(&nbAcc, &nbErrB, nbline, nbchar);
-						if (struc<7)
-							etat = END_BLOC;
-						else{
+						if (struc<7 && top(nbDo)!=nbAcc)
+							etat=END_BLOC;
+						else {
+							endDo=1;
 							etat=IN_LINE;
-							struc=8;
+							if (struc>=7)
+								struc=8;
+							else
+								pop(nbDo);
 						}
 					}else if (c == '#'){
 						etat = IN_PPC;
@@ -252,17 +252,20 @@ int main(int argc, char** argv){
 					
 					if (struc!=7)
 						detect_struct(&struc, c);
+					detect_do(&biDo, c);
 					detect_for(&inFor, c);
 					detect_com(&etat_com, &etat_fin_com, c, dst);
 				}
 				break;
 				
 			case IN_LINE:
-				transINLINE(dst, &etat, &etat_com, &etat_fin_com, &nbAcc, &nbErrB, nbline, nbchar, c, &struc, nbDo);
+				transINLINE(dst, &etat, &etat_com, &etat_fin_com, &nbAcc, &nbErrB, nbline, nbchar, c, &struc, nbDo, endDo);
+				search_do(&biDo, nbDo, nbAcc, c);
 				search_for(&inFor, c);
 				search_struct(&struc, c);
-						
+				
 				if (inFor!=4 && c == ';'){
+					endDo=0;
 					if (struc==8)
 						struc=0;
 					fprintf(dst, "\n");
@@ -279,12 +282,23 @@ int main(int argc, char** argv){
 					if (c == '"'){
 						etat = IN_STR;
 					}else if (c == '}'){
-						etat = END_BLOC;
 						decNbAcc(&nbAcc, &nbErrB, nbline, nbchar);
+						if (struc<7 && top(nbDo)!=nbAcc)
+							etat = END_BLOC;
+						else {
+							etat=IN_LINE;
+							if (struc>=7)
+								struc=8;
+							else{
+								pop(nbDo);
+								endDo=1;
+							}
+						}
 					}else if (c != '{'){
 						etat = IN_LINE;
 					}
 					indente(dst, nbAcc);
+					detect_do(&biDo, c);
 					detect_for(&inFor, c);
 					if (struc<7)
 						detect_struct(&struc, c);
@@ -303,10 +317,22 @@ int main(int argc, char** argv){
 						etat = NEW_BLOC;
 					}else if (c == '}'){
 						decNbAcc(&nbAcc, &nbErrB, nbline, nbchar);
+						if (struc<7 && top(nbDo)!=nbAcc)
+							etat = END_BLOC;
+						else {
+							etat=IN_LINE;
+							if (struc>=7)
+								struc=8;
+							else{
+								pop(nbDo);
+								endDo=1;
+							}
+						}
 					}else{
 						etat = IN_LINE;
 					}
 					indente(dst, nbAcc);
+					detect_do(&biDo, c);
 					detect_for(&inFor, c);
 					detect_com(&etat_com, &etat_fin_com, c, dst);
 				}
@@ -404,7 +430,7 @@ int main(int argc, char** argv){
 	}else{
 		perreur(4, "Erreur lecture fichier source");
 	}
-	
+	delete(nbDo);
 	fclose(src);
 	fclose(dst);
 }

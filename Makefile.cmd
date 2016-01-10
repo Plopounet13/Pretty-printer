@@ -1,4 +1,5 @@
 echo off
 cls
-clang pp.c -Wall -o bin\pp.exe
+clang -Wall -c pile.c 
+clang -Wall pp.c pile.o -o bin\pp.exe
 pause
