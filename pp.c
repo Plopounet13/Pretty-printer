@@ -207,9 +207,8 @@ int main(int argc, char** argv){
 				if (c=='\n'){
 					if (etat_ppc==1){//si le "\" est suivi d'une vrai entrée
 						etat_ppc = 0;
-					}
-				}else//si il y a une entrée seule
-					etat = NEW_LINE;
+					}else//si il y a une entrée seule
+						etat = NEW_LINE;
 				detect_com(&etat_com, c, dst);
 				break;
 			
