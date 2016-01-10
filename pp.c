@@ -1,7 +1,7 @@
-#include "pp.h"
+﻿#include "pp.h"
 
 void usage(){
-	fprintf(stderr, "Usage : pp Src_file_name Dst_file_name\n");
+	fprintf(stderr, "Usage : pp.exe Src_file_name Dst_file_name\n");
 }
 
 void erreur(int n, char* err){
@@ -98,7 +98,8 @@ int main(int argc, char** argv){
 		nbline=1,
 		nbchar=0,
 		nbErrB = 0,
-		nbErrC = 0;
+		nbErrC = 0,
+		etat_ppc=0;
 	char c;
 	/*
 	 **
@@ -117,7 +118,7 @@ int main(int argc, char** argv){
 		switch (etat) {
 			case NEW_LINE:
 				/* A CHOISIR : saut de ligne autorisé ? */
-				if (c != ' ' && c != '\t'){
+				if (c != ' ' && c != '\t' && c !='#'){
 					if (c == '"'){
 						etat = IN_STR;
 					}else if (c == '{'){
@@ -125,7 +126,10 @@ int main(int argc, char** argv){
 					}else if (c == '}'){
 						etat = END_BLOC;
 						decNbAcc(&nbAcc, &nbErrB, nbline, nbchar);
-					}else{
+					}else if (c == '#'){
+						etat = IN_PPC;
+					}
+					else{
 						etat = IN_LINE;
 					}
 					indente(dst, nbAcc);
@@ -192,7 +196,25 @@ int main(int argc, char** argv){
 				
 			case NEW_LINE_STR:
 				break;
-				
+			
+			case IN_PPC:
+				if (c == '\\'){
+					if (etat_ppc == 0)
+						etat_ppc = 1;
+					else{if (etat_ppc==1)
+							etat_ppc=0;//si jamais le "\" était échappé un autre "\"
+						}
+				}
+				if (etat_ppc == 1){
+					if (c=='\n'){//si le "\" est suivi d'une vrai entrée
+						etat_ppc = 0;
+					}
+				}else{//si il y a une entrée seule
+					etat = NEW_LINE;
+				}
+				detect_com(&etat_com, c, dst);
+				break;
+			
 			default:
 				printf("This is not a state.\n");
 				break;
