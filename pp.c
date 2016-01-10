@@ -185,12 +185,33 @@ int main(int argc, char** argv){
 				break;
 				
 			case NEW_LINE_COM:
+				if (c != ' ' && c != '\t'){
+					indente(dst, nbAcc);
+					fprintf(dst, "/*%c", c);
+					etat = IN_COM;
+					detect_fin_com(&etat_com, c, dst);
+				}
 				break;
 				
 			case IN_STR:
+				if (c =='"'){
+					etat = IN_LINE;
+				}else if (c == '\n'){
+					fprintf(dst, "\"");
+					etat = NEW_LINE_STR;
+				}
+				fprintf(dst, "%c", c);
 				break;
 				
 			case NEW_LINE_STR:
+				if (c != ' ' && c != '\n' && c != '\t'){
+					indente(dst, nbAcc);
+					fprintf(dst, "\"%c", c);
+					if (c == '"')
+						etat = IN_LINE;
+					else
+						etat = IN_STR;
+				}
 				break;
 				
 			default:
