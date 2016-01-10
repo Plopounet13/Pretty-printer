@@ -1,0 +1,1 @@
+if(test==list){/* au cas ou*/ printf("triee");}else{printf("non triee"); ce commentaire n'est pas ferme */ */}
