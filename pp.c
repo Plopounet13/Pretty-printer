@@ -209,6 +209,7 @@ int main(int argc, char** argv){
 						etat_ppc = 0;
 					}else//si il y a une entrée seule
 						etat = NEW_LINE;
+				}
 				detect_com(&etat_com, c, dst);
 				break;
 			
