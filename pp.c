@@ -251,10 +251,10 @@ int main(int argc, char** argv){
 				fprintf(stderr, "Commentaire fermé avant d'être ouvert en l%d:%d du fichier source.\n", nbline, nbchar);
 				++nbErrC;
 			}
+			fprintf(dst, "*/\n");
 			etat = NEW_LINE;
 			etat_com = 0;
 			etat_fin_com = 0;
-			fprintf(dst, "*/\n");
 		}
 	}
 	
