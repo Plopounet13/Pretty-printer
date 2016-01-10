@@ -19,7 +19,7 @@ int main (int argc, char** argv){printf("test ");
 printf("reussi\n");/*test de saut à la ligne standard*/
 
 int boucle=1;
-		for(int i=0;i<=5;i++){printf("test serie 1 num %i\n",i)};/* test
+		for(int i=0;i<=5;i++){printf("test serie 1 num %i\n",i);}/* test
 du for*/
 int i=0;
 
