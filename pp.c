@@ -16,23 +16,6 @@ void perreur(int n, char* err){
 	exit(n);
 }
 
-void detect_com(int *etat, char c, FILE *dst){
-	if (*etat == 0) {
-		*etat = (c=='/')?1:0;
-	}else if (*etat == 1) {
-		if (c == '*'){
-			*etat = 2;
-		}else{
-			*etat = 0;
-			fprintf(dst, "/");
-		}
-	}else{
-		fprintf(stderr, "Tu ne devrais pas mettre à jour etat_com.\n");
-	}
-	if (!*etat)
-		fprintf(dst,"%c", c);
-}
-
 void detect_fin_com(int *etat, char c, FILE *dst){
 	if (*etat == 0){
 		*etat = (c=='*')?1:0;
@@ -48,12 +31,30 @@ void detect_fin_com(int *etat, char c, FILE *dst){
 	}
 }
 
+void detect_com(int *etat,int *etat_fin, char c, FILE *dst){
+	if (*etat == 0) {
+		*etat = (c=='/')?1:0;
+	}else if (*etat == 1) {
+		if (c == '*'){
+			*etat = 2;
+		}else{
+			*etat = 0;
+			fprintf(dst, "/");
+		}
+	}else{
+		fprintf(stderr, "Tu ne devrais pas mettre à jour etat_com.\n");
+	}
+	detect_fin_com(etat_fin, c, dst);
+	if (!*etat && !*etat_fin)
+		fprintf(dst,"%c", c);
+}
+
 void decNbAcc(int *nbAcc, int *nbErrB, int nbline, int nbchar){
 	if (*nbAcc > 0)
 		--(*nbAcc);
 	else {
 		fprintf(stderr, "Bloc fermé non ouvert en l%d:c%d du fichier source.\n",nbline, nbchar);
-		++nbErrB;
+		++(*nbErrB);
 	}
 }
 
@@ -62,7 +63,7 @@ void indente (FILE *dst, int nbAcc){
 		fprintf(dst,"\t");
 }
 
-void transINLINE(FILE* dst, int *etat, int *etat_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c){
+void transINLINE(FILE* dst, int *etat, int *etat_com, int *etat_fin_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c){
 	if (c == '{'){
 		*etat = NEW_BLOC;
 		fprintf(dst,"\n");
@@ -77,7 +78,7 @@ void transINLINE(FILE* dst, int *etat, int *etat_com, int *nbAcc, int *nbErrB, i
 	}else if (c == '\n'){
 		*etat = NEW_LINE;
 	}
-	detect_com(etat_com, c, dst);
+	detect_com(etat_com, etat_fin_com, c, dst);
 }
 
 int main(int argc, char** argv){
@@ -130,12 +131,12 @@ int main(int argc, char** argv){
 						etat = IN_LINE;
 					}
 					indente(dst, nbAcc);
-					detect_com(&etat_com, c, dst);
+					detect_com(&etat_com, &etat_fin_com, c, dst);
 				}
 				break;
 				
 			case IN_LINE:
-				transINLINE(dst, &etat, &etat_com, &nbAcc, &nbErrB, nbline, nbchar, c);
+				transINLINE(dst, &etat, &etat_com, &etat_fin_com, &nbAcc, &nbErrB, nbline, nbchar, c);
 				break;
 				
 			case NEW_BLOC:
@@ -153,7 +154,7 @@ int main(int argc, char** argv){
 						etat = IN_LINE;
 					}
 					indente(dst, nbAcc);
-					detect_com(&etat_com, c, dst);
+					detect_com(&etat_com, &etat_fin_com, c, dst);
 				}
 				break;
 				
@@ -172,12 +173,13 @@ int main(int argc, char** argv){
 						etat = IN_LINE;
 					}
 					indente(dst, nbAcc);
-					detect_com(&etat_com, c, dst);
+					detect_com(&etat_com, &etat_fin_com, c, dst);
 				}
 				break;
 				
 			case IN_COM:
 				if (c == '\n'){
+					fprintf(dst, "*/");
 					etat = NEW_LINE_COM;
 				}
 				detect_fin_com(&etat_fin_com, c, dst);
@@ -190,7 +192,7 @@ int main(int argc, char** argv){
 					indente(dst, nbAcc);
 					fprintf(dst, "/*%c", c);
 					etat = IN_COM;
-					detect_fin_com(&etat_com, c, dst);
+					detect_fin_com(&etat_fin_com, c, dst);
 				}
 				break;
 				
@@ -229,7 +231,7 @@ int main(int argc, char** argv){
 					}else//si il y a une entrée seule
 						etat = NEW_LINE;
 				}
-				detect_com(&etat_com, c, dst);
+				detect_com(&etat_com, &etat_fin_com, c, dst);
 				break;
 				
 			default:
@@ -246,7 +248,7 @@ int main(int argc, char** argv){
 		}
 		if (etat_fin_com == 2){
 			if (etat != IN_COM){
-				fprintf(stderr, "Commentaire fermé avant d'être ouvert en l%d:c%d du fichier source.\n", nbline, nbchar);
+				fprintf(stderr, "Commentaire fermé avant d'être ouvert en l%d:%d du fichier source.\n", nbline, nbchar);
 				++nbErrC;
 			}
 			etat = NEW_LINE;
