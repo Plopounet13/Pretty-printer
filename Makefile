@@ -1,5 +1,5 @@
 EXEC=pp
-OBJECTS=$(EXEC:=.o)
+OBJECTS=$(EXEC:=.o) pile.o
 CFLAGS=-Wall
 
 all: $(EXEC)
