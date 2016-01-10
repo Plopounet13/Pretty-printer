@@ -213,6 +213,8 @@ int main(int argc, char** argv){
 							etat=IN_LINE;
 							struc=8;
 						}
+					}else if (c == '#'){
+						etat = IN_PPC;
 					}else{
 						etat = IN_LINE;
 					}
@@ -335,6 +337,10 @@ int main(int argc, char** argv){
 						etat = NEW_LINE;
 				}
 				detect_com(&etat_com, &etat_fin_com, c, dst);
+				if (etat_com==2){
+					fprintf(dst, "\n");
+					indente(dst, nbAcc);
+				}
 				break;
 				
 			default:

@@ -11,15 +11,15 @@ int* test2(int number);/* test de l'intendation*//* des déclarations de fonction
 
 			
 struct complex{int Re;int Im;
-					}	/*test des struct*/
+					};	/*test des struct*/
 
-;
+
 				
 int main (int argc, char** argv){printf("test ");
 printf("reussi\n");/*test de saut à la ligne standard*/
 
 int boucle=1;
-		for(int i=0;i<=5;i++){printf("test serie 1 num %i\n",i);}/* test
+		/*test*/for(int i=0;i<=5;i++){printf("test serie 1 num %i\n",i);}/*
 du for*/
 int i=0;
 
