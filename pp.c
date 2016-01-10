@@ -63,6 +63,32 @@ void detect_struct(int* etat_struc, char c){
 		*etat_struc=0;
 }
 
+void detect_do(int* etat_do, char c){
+	if (c=='d')
+		*etat_do=1;
+	else
+		*etat_do=0;
+}
+
+
+void search_do(int* etat_do, stack baDo, int prof, char c){
+	if (*etat_do==2){
+		if (c=='('){
+			*etat_do=3;
+			push(baDo, prof);
+		}
+		else if (c!=' ')
+			*etat_do=0;
+	}
+	
+	if (*etat_do==1){
+		if (c=='o')
+			*etat_do=2;
+		else
+			*etat_do=0;
+	}
+}
+
 void search_for(int* etat_for, char c){
 	if (*etat_for==3){
 		if (c=='(')
@@ -143,19 +169,22 @@ void indente (FILE *dst, int nbAcc){
 		fprintf(dst,"\t");
 }
 
-void transINLINE(FILE* dst, int *etat, int *etat_com, int *etat_fin_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c, int* struc){
+void transINLINE(FILE* dst, int *etat, int *etat_com, int *etat_fin_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c, int* struc, stack biDo){
 	if (c == '{'){
 		*etat = NEW_BLOC;
 		fprintf(dst,"\n");
 		indente(dst, *nbAcc);
 	}else if (c == '}'){
 		decNbAcc(nbAcc, nbErrB, nbline, nbchar);
-		if (*struc<7){
+		if (*struc<7 && top(biDo)!=nbAcc){
 			*etat = END_BLOC;
 			fprintf(dst,"\n");
 			indente(dst, *nbAcc);
-		}else
+		}else if (*struc>=7)
 			*struc=8;
+		else if (top(biDo)==nbAcc){
+			pop(biDo);
+		}
 	}else if (c == '"'){
 		*etat = IN_STR;
 	}else if (c == '\n'){
@@ -188,6 +217,7 @@ int main(int argc, char** argv){
 		etat_ppc = 0;
 		
 	char c;
+	stack nbDo;
 	
 	
 	while ((c = fgetc(src)) != EOF){
@@ -228,7 +258,7 @@ int main(int argc, char** argv){
 				break;
 				
 			case IN_LINE:
-				transINLINE(dst, &etat, &etat_com, &etat_fin_com, &nbAcc, &nbErrB, nbline, nbchar, c, &struc);
+				transINLINE(dst, &etat, &etat_com, &etat_fin_com, &nbAcc, &nbErrB, nbline, nbchar, c, &struc, nbDo);
 				search_for(&inFor, c);
 				search_struct(&struc, c);
 						
