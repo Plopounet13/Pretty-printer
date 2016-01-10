@@ -14,6 +14,8 @@
 #define IN_COM 5
 #define NEW_LINE_COM 6
 #define END_COM 7
-//#define IN_FOR 8
+#define IN_STR 8
+#define NEW_LINE_STR 9
+//#define IN_FOR
 
 #endif /* pp_h */
