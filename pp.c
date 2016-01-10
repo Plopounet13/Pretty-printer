@@ -118,7 +118,7 @@ int main(int argc, char** argv){
 		switch (etat) {
 			case NEW_LINE:
 				/* A CHOISIR : saut de ligne autorisé ? */
-				if (c != ' ' && c != '\t' && c !='#'){
+				if (c != ' ' && c != '\t'){
 					if (c == '"'){
 						etat = IN_STR;
 					}else if (c == '{'){
@@ -201,17 +201,15 @@ int main(int argc, char** argv){
 				if (c == '\\'){
 					if (etat_ppc == 0)
 						etat_ppc = 1;
-					else{if (etat_ppc==1)
+					else if (etat_ppc==1)
 							etat_ppc=0;//si jamais le "\" était échappé un autre "\"
-						}
 				}
-				if (etat_ppc == 1){
-					if (c=='\n'){//si le "\" est suivi d'une vrai entrée
+				if (c=='\n'){
+					if (etat_ppc==1){//si le "\" est suivi d'une vrai entrée
 						etat_ppc = 0;
 					}
-				}else{//si il y a une entrée seule
+				}else//si il y a une entrée seule
 					etat = NEW_LINE;
-				}
 				detect_com(&etat_com, c, dst);
 				break;
 			
