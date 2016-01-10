@@ -10,7 +10,9 @@ void bit()
 		}
 	}
 }
-// compilation pour un systeme 32-bit
+
+/* compilation pour un systeme 32-bit */
+
 #else
 void bit()
 {
@@ -22,7 +24,9 @@ void bit()
 		}
 	}
 }
-// compilation pour un systeme 64-bit
+
+/* compilation pour un systeme 64-bit */
+
 #endif
 #define ACVJ B
 
@@ -68,12 +72,13 @@ int i=0;
 		printf("test serie 2 num %i\n", i);
 		i++;
 		if (i%2)
-		printf("%i est impair\n",i);
+		{
+			printf("%i est impair\n",i);
+		}
 		else 
 		{
-			printf("%i pair\n", i)
+			printf("%i pair\n", i);
 		}
-		;
 	}
 	while (i<10);
 	
