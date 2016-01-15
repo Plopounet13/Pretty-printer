@@ -171,14 +171,15 @@ void indente (FILE *dst, int nbAcc){
 		fprintf(dst,"\t");
 }
 
-void transINLINE(FILE* dst, int *etat, int *etat_com, int *etat_fin_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c, int* struc, Stack biDo, int endDo){
+void transINLINE(FILE* dst, int *etat, int *etat_com, int *etat_fin_com, int *nbAcc, int *nbErrB, int nbline, int nbchar, char c, int endDo, char *ouverture){
 	if (c == '{'){
 		*etat = NEW_BLOC;
 		fprintf(dst,"\n");
 		indente(dst, *nbAcc);
 	}else if (c == '}'){
 		decNbAcc(nbAcc, nbErrB, nbline, nbchar);
-	}else if (c == '"'){
+	}else if (c == '"' || c == '\''){
+		*ouverture = c;
 		*etat = IN_STR;
 	}else if (c == '\n' && !endDo){
 		*etat = NEW_LINE;
@@ -212,7 +213,7 @@ int main(int argc, char** argv){
 		endDo = 0,
 		etat_ppc = 0;
 		
-	char c;
+	char c, ouverture;
 	Stack nbDo=new_stack();
 	
 	
@@ -222,6 +223,17 @@ int main(int argc, char** argv){
 			nbchar=0;
 		}else
 			++nbchar;
+		if (c == '\\' && etat != NEW_LINE_COM && etat != IN_COM){
+			if ((c = fgetc(src)) != EOF){
+				fprintf(dst, "\\%c", c);
+				continue;
+			}else{
+				fprintf(dst, "\\");
+				break;
+			}
+		}
+		
+		
 		
 		
 		switch (etat) {
@@ -259,7 +271,7 @@ int main(int argc, char** argv){
 				break;
 				
 			case IN_LINE:
-				transINLINE(dst, &etat, &etat_com, &etat_fin_com, &nbAcc, &nbErrB, nbline, nbchar, c, &struc, nbDo, endDo);
+				transINLINE(dst, &etat, &etat_com, &etat_fin_com, &nbAcc, &nbErrB, nbline, nbchar, c, endDo, &ouverture);
 				search_do(&biDo, nbDo, nbAcc, c);
 				search_for(&inFor, c);
 				search_struct(&struc, c);
@@ -358,10 +370,10 @@ int main(int argc, char** argv){
 				break;
 				
 			case IN_STR:
-				if (c =='"'){
+				if (c ==ouverture){
 					etat = IN_LINE;
 				}else if (c == '\n'){
-					fprintf(dst, "\"");
+					fprintf(dst, "%c", ouverture);
 					etat = NEW_LINE_STR;
 				}
 				fprintf(dst, "%c", c);
@@ -370,8 +382,8 @@ int main(int argc, char** argv){
 			case NEW_LINE_STR:
 				if (c != ' ' && c != '\n' && c != '\t'){
 					indente(dst, nbAcc);
-					fprintf(dst, "\"%c", c);
-					if (c == '"')
+					fprintf(dst, "%c%c", ouverture, c);
+					if (c == ouverture)
 						etat = IN_LINE;
 					else
 						etat = IN_STR;
@@ -384,12 +396,12 @@ int main(int argc, char** argv){
 					if (etat_ppc == 0)
 						etat_ppc = 1;
 					else if (etat_ppc==1)
-						etat_ppc=0;//si jamais le "\" était échappé un autre "\"
+						etat_ppc=0;/*si jamais le "\" était échappé un autre "\"*/
 				}
 				if (c=='\n'){
-					if (etat_ppc==1){//si le "\" est suivi d'une vrai entrée
-						etat_ppc = 0;
-					}else//si il y a une entrée seule
+					if (etat_ppc==1){/*si le "\" est suivi d'une vrai entrée */
+						etat_ppc = 0;/*\*/
+					}else/*si il y a une entrée seule*/
 						etat = NEW_LINE;
 				}
 				detect_com(&etat_com, &etat_fin_com, c, dst);
@@ -405,7 +417,7 @@ int main(int argc, char** argv){
 		}
 		if (etat_com == 2){
 			etat = IN_COM;
-			etat_com = 0;
+			etat_com = 0; 
 			etat_fin_com =0;
 			fprintf(dst, "/*");
 		}
